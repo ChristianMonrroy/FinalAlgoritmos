@@ -73,16 +73,33 @@ def recommend_by_name():
     song = session.query(Song).filter(Song.track_artist == artist, Song.track_name == song_name).first()
 
     if not song:
+        session.close()
         return jsonify({"error": "Canción no encontrada"}), 404
 
-    # Obtener recomendaciones
+    # Obtener recomendaciones (IDs) y luego los detalles de cada recomendación
     recommendations_ids = get_recommendations(song.id)
-    recommendations = session.query(Song.track_name, Song.track_artist).filter(Song.id.in_(recommendations_ids)).all()
+    recommendations = session.query(Song.track_name, Song.track_artist, Song.track_id).filter(Song.id.in_(recommendations_ids)).all()
     session.close()
 
-    # Formatear las recomendaciones
-    recommendations_list = [{"track_name": rec[0], "track_artist": rec[1]} for rec in recommendations]
-    return jsonify(recommendations_list)
+    # Formatear las recomendaciones incluyendo el enlace de Spotify
+    recommendations_list = [
+        {
+            "track_name": rec.track_name,
+            "track_artist": rec.track_artist,
+            "spotify_link": f"https://open.spotify.com/track/{rec.track_id}"
+        }
+        for rec in recommendations
+    ]
+
+    # También incluir el enlace de la canción seleccionada
+    selected_song = {
+        "track_name": song.track_name,
+        "track_artist": song.track_artist,
+        "spotify_link": f"https://open.spotify.com/track/{song.track_id}"
+    }
+
+    return jsonify({"selected_song": selected_song, "recommendations": recommendations_list})
+
 
 @app.route('/artists', methods=['GET'])
 def get_artists():

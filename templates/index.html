@@ -44,14 +44,36 @@
             }
 
             const response = await fetch(`/recommend_by_name?artist=${encodeURIComponent(artist)}&song=${encodeURIComponent(song)}`);
-            const recommendations = await response.json();
+            const data = await response.json();
+
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // Mostrar la canción seleccionada y reproducirla en el reproductor de Spotify
+            const selectedSong = data.selected_song;
+            const selectedSongDiv = document.getElementById("selectedSong");
+            selectedSongDiv.innerHTML = `<h3>Canción Seleccionada</h3>
+                                         <p>${selectedSong.track_name} - ${selectedSong.track_artist}</p>`;
+            playOnSpotify(selectedSong.spotify_link);
+
+            // Mostrar las recomendaciones
             const recommendationsList = document.getElementById("recommendationsList");
-            recommendationsList.innerHTML = "";  // Limpiar recomendaciones anteriores
-            recommendations.forEach(rec => {
+            recommendationsList.innerHTML = "<h3>Recomendaciones</h3>";  // Limpiar recomendaciones anteriores
+            data.recommendations.forEach(rec => {
                 const listItem = document.createElement("li");
-                listItem.textContent = `${rec.track_name} - ${rec.track_artist}`;
+                listItem.innerHTML = `${rec.track_name} - ${rec.track_artist}
+                                      <button onclick="playOnSpotify('${rec.spotify_link}')">Reproducir</button>`;
                 recommendationsList.appendChild(listItem);
             });
+        }
+
+        // Función para reproducir una canción en el reproductor de Spotify integrado
+        function playOnSpotify(spotifyLink) {
+            const trackId = spotifyLink.split('/').pop();  // Obtener el track_id desde el enlace
+            const playerDiv = document.getElementById("player");
+            playerDiv.innerHTML = `<iframe src="https://open.spotify.com/embed/track/${trackId}" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>`;
         }
 
         // Cargar los artistas cuando se carga la página
@@ -60,6 +82,7 @@
 </head>
 <body>
 <h1>Recomendaciones Musicales</h1>
+
 <label for="artistSelect">Seleccione un Artista:</label>
 <select id="artistSelect" onchange="loadSongs()">
     <option value="">Seleccione un artista</option>
@@ -72,7 +95,11 @@
 
 <button onclick="getRecommendations()">Recomendar</button>
 
-<h2>Recomendaciones</h2>
+<div id="selectedSong"></div>
+
 <ul id="recommendationsList"></ul>
+
+<h2>Reproductor</h2>
+<div id="player"></div>  <!-- Este div contendrá el reproductor de Spotify -->
 </body>
 </html>

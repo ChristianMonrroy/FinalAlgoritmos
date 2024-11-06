@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Recomendaciones Musicales</title>
+    <script>
+        // Función para cargar los artistas en el primer combobox
+        async function loadArtists() {
+            const response = await fetch('/artists');
+            const artists = await response.json();
+            const artistSelect = document.getElementById("artistSelect");
+            artistSelect.innerHTML = "<option value=''>Seleccione un artista</option>";
+            artists.forEach(artist => {
+                const option = document.createElement("option");
+                option.value = artist;
+                option.textContent = artist;
+                artistSelect.appendChild(option);
+            });
+        }
+
+        // Función para cargar las canciones del artista seleccionado en el segundo combobox
+        async function loadSongs() {
+            const artist = document.getElementById("artistSelect").value;
+            const response = await fetch(`/songs?artist=${encodeURIComponent(artist)}`);
+            const songs = await response.json();
+            const songSelect = document.getElementById("songSelect");
+            songSelect.innerHTML = "<option value=''>Seleccione una canción</option>";
+            songs.forEach(song => {
+                const option = document.createElement("option");
+                option.value = song;
+                option.textContent = song;
+                songSelect.appendChild(option);
+            });
+        }
+
+        // Función para obtener recomendaciones
+        async function getRecommendations() {
+            const artist = document.getElementById("artistSelect").value;
+            const song = document.getElementById("songSelect").value;
+
+            if (!artist || !song) {
+                alert("Por favor seleccione un artista y una canción.");
+                return;
+            }
+
+            const response = await fetch(`/recommend_by_name?artist=${encodeURIComponent(artist)}&song=${encodeURIComponent(song)}`);
+            const recommendations = await response.json();
+            const recommendationsList = document.getElementById("recommendationsList");
+            recommendationsList.innerHTML = "";  // Limpiar recomendaciones anteriores
+            recommendations.forEach(rec => {
+                const listItem = document.createElement("li");
+                listItem.textContent = `${rec.track_name} - ${rec.track_artist}`;
+                recommendationsList.appendChild(listItem);
+            });
+        }
+
+        // Cargar los artistas cuando se carga la página
+        window.onload = loadArtists;
+    </script>
+</head>
+<body>
+<h1>Recomendaciones Musicales</h1>
+<label for="artistSelect">Seleccione un Artista:</label>
+<select id="artistSelect" onchange="loadSongs()">
+    <option value="">Seleccione un artista</option>
+</select>
+
+<label for="songSelect">Seleccione una Canción:</label>
+<select id="songSelect">
+    <option value="">Seleccione una canción</option>
+</select>
+
+<button onclick="getRecommendations()">Recomendar</button>
+
+<h2>Recomendaciones</h2>
+<ul id="recommendationsList"></ul>
+</body>
+</html>
